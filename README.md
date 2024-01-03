@@ -1,3 +1,5 @@
+# Automatic Heatbed for Neptune 4 Pro
+
 Hello printing enthusiasts,
 
 Did you know that the Elegoo Neptune 4 Pro doesn't just have one, but two heated bed zones? Yes, you heard it right - double the fun, double the warmth! However, Elegoo suggests that we all switch to the included outdated Cura Slicer to make use of this feature.
