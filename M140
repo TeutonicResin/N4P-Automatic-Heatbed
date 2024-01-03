@@ -1,0 +1,39 @@
+[gcode_macro M140]
+rename_existing: M99140
+gcode:
+    #Variables
+    {% set s = (params.S|float,120)|min %}
+
+    #Check if heating is already in progress
+    {% if printer.heater_bed.target != 0 %}
+        {% set centerBedUnheated=False%}
+    {% else %}
+        {% set centerBedUnheated=True%}
+    {% endif %}
+
+    {% if printer["heater_generic heater_bed1"].target != 0 %}
+        {% set outerBedUnheated=False%}
+    {% else %}
+        {% set outerBedUnheated=True%}
+    {% endif %}
+  
+    #Heat both beds if center bed is unheated or outer heatbed is heated
+    {% if centerBedUnheated == True or outerBedUnheated == False %}
+	    {% if params.S is defined %}
+            SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={s|int}
+            SET_HEATER_TEMPERATURE HEATER=heater_bed1 TARGET={s|int}
+        {% else %}
+            SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0
+            SET_HEATER_TEMPERATURE HEATER=heater_bed1 TARGET=0
+	    {% endif %}
+    {% endif %}
+
+    #Only change temperature on center heatbed if center already heated and outer heatbed is cold
+    {% if centerBedUnheated == False %}
+	    {% if params.S is defined %}
+            SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={s|int}
+        {% else %}
+            SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0
+            SET_HEATER_TEMPERATURE HEATER=heater_bed1 TARGET=0
+	    {% endif %}
+    {% endif %}
