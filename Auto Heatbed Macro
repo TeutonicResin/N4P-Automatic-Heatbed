@@ -1,0 +1,49 @@
+#######################################################################
+## Auto Heatbed
+#######################################################################
+[gcode_macro AUTOMATIC_HEATBED]
+variable_parameter_AREA_START : 0,0
+variable_parameter_AREA_END : 0,0
+gcode:
+
+#Get parameters from Slicer
+    {% set BED_TEMP = params.BED_TEMP|default(60)|float %}
+    {% if params.AREA_START and params.AREA_END %}
+        {% set X1 = params.AREA_START.split(",")[0]|float %}
+    	{% set X2 = params.AREA_START.split(",")[1]|float %}
+    	{% set Y1 = params.AREA_END.split(",")[0]|float %}
+    	{% set Y2 = params.AREA_END.split(",")[1]|float %}
+        {% set hblength = (Y1 - X1)| round(2) %}
+        {% set hbheight = (Y2 - X2)| round(2) %}
+        {action_respond_info("Automatic heatbed activated.")}
+
+        #Check if the print needs the outer heatbed
+        {% if ((X1 < 52) or (X2 < 52) or (Y1 > 172) or (Y2 > 172)) %}
+        {action_respond_info("Needed heatbed size {} x {} mm. Start heating both heatbeds at {}°C.".format(
+            (hblength),
+            (hbheight),
+            (BED_TEMP),
+        ))}
+        #Needed bedsize is bigger than X 52,52 and Y 172,172
+            SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={BED_TEMP} #Activate center head bed
+            SET_HEATER_TEMPERATURE HEATER=heater_bed1 TARGET={BED_TEMP} #Activate center outer bed
+        {% else%}
+        #Needed bedsize is smaller
+        {action_respond_info("Needed heatbed size {} x {} mm. Start heating center heatbed only at {}°C.".format(
+            (hblength),
+            (hbheight),
+            (BED_TEMP),
+        ))}
+            SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={BED_TEMP} #Activate center head bed
+        {% endif %}
+
+        #Wait for temperature
+        {% if printer.heater_bed.temperature <= BED_TEMP-2 %}
+            TEMPERATURE_WAIT SENSOR=heater_bed MINIMUM={BED_TEMP-2} MAXIMUM={BED_TEMP+10}
+            G4 P20000
+        {% else %}
+            G4 P10000
+        {% endif %}
+    {% else %}
+        M140 S0
+    {% endif %}
